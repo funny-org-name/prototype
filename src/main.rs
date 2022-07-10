@@ -106,12 +106,15 @@ fn apply_velocity(mut query: Query<(&mut Transform, &mut Velocity)>) {
     }
 }
 
+// Todo: move camera to player
+#[allow(dead_code)]
 fn move_camera(
     mut camera_query: Query<&mut Transform, With<Camera>>,
-    mut cube_query: Query<&Transform, With<Cube>>,
+    cube_query: Query<&Transform, With<Cube>>,
 ) {
-    for (mut transform) in camera_query.iter_mut() {
+    for mut _transform in camera_query.iter_mut() {
         let cube = cube_query.single();
+        
         dbg!(cube);
     }
 }
