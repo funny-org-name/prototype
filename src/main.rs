@@ -21,7 +21,8 @@ fn main() {
         .add_system_set(
             SystemSet::new()
                 .with_system(move_cube)
-                .with_system(apply_velocity.after(move_cube))
+                .with_system(move_camera)
+                .with_system(apply_velocity.after(move_camera))
         )
         .run();
 }
@@ -68,7 +69,8 @@ fn setup(
         .insert_bundle(PerspectiveCameraBundle {
             transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
             ..default()
-        });
+        })
+        .insert(Velocity(Vec3::ZERO));
 }
 
 fn apply_velocity(mut query: Query<(&mut Transform, &mut Velocity)>) {
@@ -109,13 +111,15 @@ fn apply_velocity(mut query: Query<(&mut Transform, &mut Velocity)>) {
 // Todo: move camera to player
 #[allow(dead_code)]
 fn move_camera(
-    mut camera_query: Query<&mut Transform, With<Camera>>,
-    cube_query: Query<&Transform, With<Cube>>,
+    keyboard_input: Res<Input<KeyCode>>,
+    mut camera_query: Query<(&mut Transform, &mut Velocity), (With<Camera>, Without<Cube>)>,
+    cube_query: Query<(&Transform, &Velocity), (With<Cube>, Without<Camera>)>,
 ) {
-    for mut _transform in camera_query.iter_mut() {
-        let cube = cube_query.single();
+    for (mut transform, mut velocity) in camera_query.iter_mut() {
+        let (cube_t, cube_v) = cube_query.single();
         
-        dbg!(cube);
+        transform.translation = cube_t.translation + Vec3::new(0., 1., 0.);
+        velocity.0 = cube_v.0;
     }
 }
 
