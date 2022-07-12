@@ -1,5 +1,4 @@
-use bevy::{prelude::*, ecs::event::ManualEventReader, input::mouse::MouseMotion, math::vec3};
-use bevy_config_cam::{ConfigCam, MovementSettings, PlayerSettings};
+use bevy::{prelude::*, input::mouse::MouseMotion, math::vec3};
 
 // Defines the amount of time that should elapse between each physics step.
 const TIME_STEP: f32 = 1.0 / 60.0;
@@ -17,7 +16,6 @@ struct Camera;
 // Keeps track of mouse motion events, pitch, and yaw
 #[derive(Default)]
 struct InputState {
-    reader_motion: ManualEventReader<MouseMotion>,
     pitch: f32,
     yaw: f32,
 }
@@ -89,7 +87,7 @@ fn setup(
         .spawn()
         .insert(Cube)
         .insert_bundle(PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+            mesh: meshes.add(Mesh::from(shape::Capsule { radius: 0.3, rings: 2, depth: 0.7, latitudes: 200, longitudes: 300, uv_profile: shape::CapsuleUvProfile::Fixed })),
             material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
             transform: Transform::from_xyz(0.0, 0.5, 0.0),
             ..default()
@@ -155,7 +153,6 @@ fn apply_velocity(mut query: Query<(&mut Transform, &mut Velocity)>) {
 fn mouse_look(
     settings: Res<MouseMovementSettings>,
     mut state: ResMut<InputState>,
-    keyboard_input: Res<Input<KeyCode>>,
     mut camera_query: Query<&mut Transform, (With<Camera>, Without<Cube>)>,
     mut motion_evr: EventReader<MouseMotion>,
     mut cube_query: Query<&mut Transform, (With<Cube>, Without<Camera>)>,
@@ -187,21 +184,20 @@ fn mouse_look(
 
 }
 
+#[allow(clippy::type_complexity)]
 fn move_camera(
+    state: ResMut<InputState>,
     mut camera_query: Query<(&mut Transform, &mut Velocity), (With<Camera>, Without<Cube>)>,
     cube_query: Query<(&Transform, &Velocity), (With<Cube>, Without<Camera>)>,
 ) {
-
-
     for (mut transform, mut velocity) in camera_query.iter_mut() {
         let (cube_t, cube_v) = cube_query.single();
         
-        let i = cube_t.local_x();
-        let j = cube_t.local_y();
-        let k = cube_t.local_z();
+        let i = cube_t.local_x(); let a = Vec3::ONE;
+        let j = cube_t.local_y(); let b = vec3(1.0,1.0,1.0);
+        let k = cube_t.local_z(); let c = vec3(3.,3.,3.);
 
-
-        transform.translation = cube_t.translation + j + cube_t.back() + cube_t.back() + cube_t.right() ;
+        transform.translation = cube_t.translation + (a*i + b*j + c*k);
         velocity.0 = cube_v.0;
     }
 }
@@ -210,7 +206,7 @@ fn move_cube(
     keyboard_input: Res<Input<KeyCode>>,
     mut query: Query<(&mut Transform, &mut Velocity), With<Cube>>,
 ) {
-    for (mut transform, mut velocity) in query.iter_mut() {
+    for (transform, mut velocity) in query.iter_mut() {
 
         // fixme: use velocity instead of translation
         // todo: change controls to tank controls (more like an fps)
